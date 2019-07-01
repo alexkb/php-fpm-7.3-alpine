@@ -5,13 +5,14 @@ FROM php:7.3-fpm-alpine
 RUN set -xe \
     && apk add --update icu \
     && apk add --no-cache --virtual .php-deps make \
-    && apk add --no-cache --virtual .build-deps \
+    && apk add --no-cache --virtual .deps \
         libzip-dev \
         icu-dev \
         g++ \
         imagemagick-dev \
         libtool \
         make \
+    && docker-php-ext-configure zip --with-libzip=/usr/include \
     && docker-php-ext-install zip \
     && docker-php-ext-install mysqli \
     && docker-php-ext-install tokenizer \
@@ -22,7 +23,7 @@ RUN set -xe \
     && docker-php-ext-install intl \
     && docker-php-ext-enable intl \
     && { find /usr/local/lib -type f -print0 | xargs -0r strip --strip-all -p 2>/dev/null || true; } \
-    && apk del .build-deps \
+    && apk del .deps \
     && rm -rf /tmp/* /usr/local/lib/php/doc/* /var/cache/apk/*
 # Image optimisations
 # apt-get install -y --force-yes jpegoptim optipng pngquant gifsicle
@@ -45,8 +46,8 @@ RUN apk add --no-cache libmcrypt-dev \
     && yes | pecl install -o -f mcrypt-1.0.1 \
     && docker-php-ext-enable mcrypt
 
-COPY ./php/laravel.ini  /usr/local/etc/php/conf.d
-COPY ./php/xlaravel.pool.conf /usr/local/etc/php-fpm.d/
+COPY ./laravel.ini  /usr/local/etc/php/conf.d
+COPY ./xlaravel.pool.conf /usr/local/etc/php-fpm.d/
 
 RUN apk --update add curl \
     && curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
